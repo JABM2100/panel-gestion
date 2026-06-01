@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Datos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f5f4f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .label-top {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: #c49a3c;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    color: #1a1a1a;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .field { margin-bottom: 1.25rem; }
+
+  .field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid #e5e4e0;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: #1a1a1a;
+    background: #fafaf8;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input::placeholder { color: #bbb; }
+  input:focus { border-color: #c49a3c; background: #fff; }
+
+  .btn {
+    width: 100%;
+    padding: 15px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .btn:hover { background: #333; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { background: #999; cursor: not-allowed; }
+
+  .error {
+    display: none;
+    background: #fff0f0;
+    border: 1px solid #fcc;
+    color: #c0392b;
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 1rem;
+    line-height: 1.5;
+  }
+
+  .access-note {
+    font-size: 12px;
+    color: #bbb;
+    text-align: center;
+    line-height: 1.7;
+    margin-top: 1.5rem;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="label-top">Gestión de datos</p>
+  <h1>Inicia sesión</h1>
+  <p class="subtitle">Acceso restringido. Usa las credenciales asignadas.</p>
+
+  <div class="field">
+    <label class="field-label" for="email">Correo</label>
+    <input id="email" type="email" placeholder="correo@ejemplo.com" autocomplete="email" />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="pass">Contraseña</label>
+    <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+  </div>
+
+  <button class="btn" id="btn-login" onclick="handleLogin()">Entrar</button>
+
+  <div class="error" id="error-msg"></div>
+
+  <p class="access-note">Solo usuarios autorizados.<br>Contacta al administrador para acceso.</p>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://vvqizkqmkmcmdsporwjs.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2cWl6a3Fta21jbWRzcG9yd2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDE4MzcsImV4cCI6MjA5NTkxNzgzN30.2v9qNTda9XnuN7McX38B15TdwQa0vbA_qPGopj0iwZc';
+
+  const { createClient } = supabase;
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('pass').value;
+    const btn = document.getElementById('btn-login');
+    const errEl = document.getElementById('error-msg');
+
+    errEl.style.display = 'none';
+
+    if (!email || !pass) {
+      errEl.textContent = 'Por favor completa todos los campos.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+
+    const { data, error } = await client.auth.signInWithPassword({ email, password: pass });
+
+    if (error) {
+      errEl.textContent = 'Correo o contraseña incorrectos.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+      return;
+    }
+
+    btn.textContent = '¡Acceso concedido!';
+    window.location.href = 'dashboard.html';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+</script>
+</body>
+</html>
